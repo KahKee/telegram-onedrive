@@ -1,17 +1,10 @@
 name: Publish Docker 
 
 on:
-  push:
+  release:
+    types: [published]
     branches:
-      # 监听推送到 master 分支
-      - "master"
-    # 监听以 v 开头的标签
-    tags:
-      - 'v*'
-  pull_request:
-    # 监听针对 master 分支的拉取请求
-    branches:
-      - "master"
+      - 'master'
   workflow_dispatch:
     inputs:
       version:
@@ -39,14 +32,15 @@ jobs:
       uses: actions/checkout@v4
       with:
         token: ${{ env.GITHUB_TOKEN }}
-    
+
     - name: Update Version
       run: |
         PROJECT_NAME=$(grep '^name = ' Cargo.toml | awk -F'"' '{print $2}')
         sed -i "/^name = \"$PROJECT_NAME\"$/{N; s/version = \".*\"/version = \"$RELEASE_VERSION\"/}" Cargo.toml
         sed -i "/^name = \"$PROJECT_NAME\"$/{N; s/version = \".*\"/version = \"$RELEASE_VERSION\"/}" Cargo.lock
+      if: github.event_name == 'release' && github.event.action == 'published'
 
-    - name: Commit and Push version changes
+    - name: Commit and Push
       run: |
         git config --global user.name $NAME
         git config --global user.email $EMAIL
@@ -59,7 +53,8 @@ jobs:
             git push origin HEAD:master
             git push origin HEAD:master --tags -f
         fi
-
+      if: github.event_name == 'release' && github.event.action == 'published'
+      
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
     
