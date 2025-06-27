@@ -6,28 +6,23 @@ on:
     branches:
       - 'master'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to build and push (e.g., v1.2.3)'
-        required: true
 
 env:
   REPO: wjg97/telegram-onedrive
   NAME: KahKee
   EMAIL: 946612410@qq.com
   GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-  TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
-  RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
+  TAG_NAME: ${{ github.event_name == 'workflow_dispatch' || github.event.release.tag_name }}
+  RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' || github.event.release.tag_name }}
 
 permissions:
   contents: read
 
-run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }
+run-name: ${{ github.event_name == 'workflow_dispatch' || github.event.release.tag_name }
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'KahKee'
     steps:
     - name: Checkout
       uses: actions/checkout@v4
