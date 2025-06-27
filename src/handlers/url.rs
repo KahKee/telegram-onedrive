@@ -50,7 +50,13 @@ pub async fn handler(message: TelegramMessage, state: AppState) -> Result<()> {
             let onedrive = &state.onedrive;
             let task_session = &state.task_session;
 
-            let url = cmd[1].url_encode();
+            // 解析是否重命名
+            let (raw_url, file_rename) = match cmd[1].split_once('|') {
+                Some((url_part, name_part)) => (url_part.trim(), Some(name_part.trim())),
+                None => (cmd[1].trim(), None),
+            };
+
+            let url = raw_url.url_encode();
 
             if url.starts_with("http://") || url.starts_with("https://") {
                 let http_client = get_http_client()?;
@@ -61,11 +67,25 @@ pub async fn handler(message: TelegramMessage, state: AppState) -> Result<()> {
                     .await
                     .context("failed to send head request for /url")?;
 
-                let filename = get_filename(
+                // 获取默认文件名（含扩展名）
+                let default_filename = get_filename(
                     response.url().as_ref(),
                     &response,
                     &onedrive.get_root_path(false).await?,
                 )?;
+
+                // 获取扩展名（包含 .）
+                let extension = match std::path::Path::new(&default_filename).extension() {
+                    Some(ext) => format!(".{}", ext.to_string_lossy()),
+                    None => "".to_string(),
+                };
+
+                // 使用自定义文件名 + 保留的扩展名（如果有）
+                let filename = if let Some(name) = file_rename {
+                    format!("{}{}", name, extension)
+                } else {
+                    default_filename
+                };
 
                 let total_length = match response.headers().get(header::CONTENT_LENGTH) {
                     Some(content_length) => content_length

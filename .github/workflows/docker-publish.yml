@@ -6,24 +6,28 @@ on:
     branches:
       - 'master'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build and push (e.g., v1.2.3)'
+        required: true
 
 env:
-  REPO: hlf01/telegram-onedrive
-  NAME: L-ING
-  EMAIL: hlf01@icloud.com
+  REPO: wjg97/telegram-onedrive
+  NAME: KahKee
+  EMAIL: 946612410@qq.com
   GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-  TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && 'dev' || github.event.release.name }}
-  RELEASE_VERSION: ${{ github.event.release.name }}
+  TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
+  RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
 
 permissions:
   contents: read
 
-run-name: ${{ github.event_name == 'workflow_dispatch' && 'build dev' || github.event.release.name }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'hlf20010508'
+    if: github.repository_owner == 'KahKee'
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -37,11 +41,11 @@ jobs:
         sed -i "/^name = \"$PROJECT_NAME\"$/{N; s/version = \".*\"/version = \"$RELEASE_VERSION\"/}" Cargo.lock
       if: github.event_name == 'release' && github.event.action == 'published'
 
-    - name: Commit and Push
+    - name: Commit and Push version changes
       run: |
         git config --global user.name $NAME
         git config --global user.email $EMAIL
-        git add -A
+        git add Cargo.toml Cargo.lock
         if git diff-index --quiet HEAD --; then
             echo "Bypass commit."
         else
@@ -71,19 +75,4 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ${{ env.REPO }}:${{ env.RELEASE_VERSION }},${{ env.REPO }}:latest,${{ env.REPO }}:dev
-      if: github.event_name == 'release' && github.event.action == 'published'
-
-    - name: Build and push image dev
-      uses: docker/build-push-action@v5
-      with:
-        file: Dockerfile
-        context: .
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: ${{ env.REPO }}:dev
-      if: github.event_name == 'workflow_dispatch'
-    
-    - name: Send Notification
-      run: |
-        curl -X POST -d "title=Github Actions Notification&body=$GITHUB_REPOSITORY@$TAG_NAME build completed." ${{ secrets.WEBHOOK_URL }}
+        tags: ${{ env.REPO }}:${{ env.TAG_NAME }},${{ env.REPO }}:latest
