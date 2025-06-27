@@ -39,6 +39,21 @@ jobs:
         sed -i "/^name = \"$PROJECT_NAME\"$/{N; s/version = \".*\"/version = \"$RELEASE_VERSION\"/}" Cargo.toml
         sed -i "/^name = \"$PROJECT_NAME\"$/{N; s/version = \".*\"/version = \"$RELEASE_VERSION\"/}" Cargo.lock
       if: github.event_name == 'release' && github.event.action == 'published'
+
+    - name: Commit and Push
+      run: |
+        git config --global user.name $NAME
+        git config --global user.email $EMAIL
+        git add -A
+        if git diff-index --quiet HEAD --; then
+            echo "Bypass commit."
+        else
+            git commit -m "chore: update version to $RELEASE_VERSION"
+            git tag -f $RELEASE_VERSION
+            git push origin HEAD:master
+            git push origin HEAD:master --tags -f
+        fi
+      if: github.event_name == 'release' && github.event.action == 'published'
       
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
