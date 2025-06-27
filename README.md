@@ -140,6 +140,7 @@ If you don't follow these steps, the bot may not work.
 - `/drive logout $index` to logout specified OneDrive account.
 - `/links $message_link $range` to transfer sequential restricted content.
 - `/url $file_url` to upload the file through url.
+- `/url $file_url|rename` to upload file with different filename use '|' to seperate link and filename.
 - `/logs` to send log file.
 - `/logs clear` to clear logs.
 - `/dir` to show current OneDrive directory.
@@ -158,6 +159,7 @@ If you don't follow these steps, the bot may not work.
 ### Example
 - `/links https://t.me/c/xxxxxxx/100 2` will transfer `https://t.me/c/xxxxxxx/100` and `https://t.me/c/xxxxxxx/101`.
 - `/url https://example.com/file.txt` will upload `file.txt`. The headers of the file response must includes `Content-Length`.
+- `/url https://example.com/file.txt|file1` will upload `file1.txt`. The headers of the file response must includes `Content-Length`.
 - In a file named `example.t2o`, write these lines for example:
     ```
     https://t.me/xxxx/100
